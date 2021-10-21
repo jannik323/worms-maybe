@@ -8,7 +8,7 @@ canvas1.height = 400;
 
 let canscale = canvas1.width/canvas1.height;
 
-let landsize = 100;
+let landsize = 150;
 let land_x = Math.round(landsize*canscale);
 let land_y = Math.round(landsize);
 
@@ -577,7 +577,6 @@ function distance(x1,x2,y1,y2){
     return Math.sqrt(((x2-x1)**2)+((y2-y1)**2));
 }
 
-new player(10,10);
 let lastRenderTime = 0;
 let GameSpeed = 200;
 let lastGameSpeed = 60
