@@ -1,14 +1,13 @@
 "use strict";
 
-
 let canvas1 = document.getElementById("canvas1");
 canvas1.width = 800;
-canvas1.height = 400;
+canvas1.height = 600;
 
 
 let canscale = canvas1.width/canvas1.height;
 
-let landsize = 150;
+let landsize = 200;
 let land_x = Math.round(landsize*canscale);
 let land_y = Math.round(landsize);
 
@@ -29,6 +28,7 @@ const PLAYERS = [];
 const EXPL_PARTICLE = [];
 const BULLETS = [];
 const PROJECTILES = [];
+
 
 class block{
 
@@ -60,30 +60,6 @@ class block{
 
 }
 
-let generatedland = generateland();
-
-generatedland = generatedland.map((v,i)=>{
-if(i >2 && i < generatedland.length-3){
-    return Math.round((generatedland[i-1]+generatedland[i-2]+generatedland[i-3]+generatedland[i+1]+generatedland[i+2]+generatedland[i+3])/6);
-}else{
-    return v;
-}
-})
-
-const LANDSCAPE = [];
-for(let y = 0; y < land_y; y++){
-    LANDSCAPE[y] = [];
-    for(let x = 0; x < land_x; x++){
-        if(y< generatedland[x]){
-            LANDSCAPE[y].push(new block("white",x,y,false));
-        }else{
-            LANDSCAPE[y].push(new block("hsl("+(35+randomrange(-5,5))+", "+randomrange(50,90)+"%, "+((((y-(generatedland[x]))+20)/land_y)*255/3)+"%)",x,y,true));
-            // LANDSCAPE[y].push(new block("hsl(35, "+randomrange(60,90)+"%, "+(((y-(generatedland[x]))/land_y)*255)+"%)",x,y,true));
-        }
-    }
-}   
-
-
 const GameManager = {
 
     currentPlayer : 0,
@@ -99,8 +75,6 @@ const GameManager = {
 
 
 }
-
-
 
 class player{
 
@@ -489,8 +463,6 @@ class explosion_particle{
 
 }
 
-
-
 function createexplosion(x,y,amount,size,range){
     for(let expl= 0; expl<amount;expl++){
         new explosion_particle(x,y,Math.random()*Math.PI*2,x_scale/(randomrange(size,size+10)+Math.random()),"none",3,range);
@@ -569,6 +541,35 @@ function generateland(){
     return genyland;
 }
 
+function roundland(l){
+    l = l.map((v,i)=>{
+        if(i >2 && i < l.length-3){
+            return Math.round((l[i-1]+l[i-2]+l[i-3]+l[i+1]+l[i+2]+l[i+3])/6);
+        }else{
+            return v;
+        }
+        })
+    return l
+}
+
+function generatLandscape(){
+
+    let generatedland = generateland();
+    generatedland = roundland(generatedland);
+    
+    for(let y = 0; y < land_y; y++){
+        LANDSCAPE[y] = [];
+        for(let x = 0; x < land_x; x++){
+            if(y< generatedland[x]){
+                LANDSCAPE[y].push(new block("white",x,y,false));
+            }else{
+                LANDSCAPE[y].push(new block("hsl("+(35+randomrange(-5,5))+", "+randomrange(50,90)+"%, "+((((y-(generatedland[x]))+20)/land_y)*255/3)+"%)",x,y,true));
+            }
+        }
+    }   
+
+}
+
 function randomrange(min, max) { 
     return Math.floor(Math.random() * (max - min + 1) + min)
 }
@@ -579,7 +580,10 @@ function distance(x1,x2,y1,y2){
 
 let lastRenderTime = 0;
 let GameSpeed = 200;
-let lastGameSpeed = 60
+let lastGameSpeed = 200;
+
+const LANDSCAPE = [];
+generatLandscape();
 
 function main(currentTime){
     window.requestAnimationFrame(main);
@@ -593,16 +597,16 @@ function main(currentTime){
 window.requestAnimationFrame(main); 
 
 function update(){
-PLAYERS.forEach((v,i)=>v.update(i));
-EXPL_PARTICLE.forEach((v,i)=>v.update(i));
-PROJECTILES.forEach((v,i)=>v.update(i));
+    PLAYERS.forEach((v,i)=>v.update(i));
+    EXPL_PARTICLE.forEach((v,i)=>v.update(i));
+    PROJECTILES.forEach((v,i)=>v.update(i));
 }
 
 function render(){
-ctx2.clearRect(0,0,canvas2.width,canvas2.height);
-EXPL_PARTICLE.forEach(v=>v.render());
-PLAYERS.forEach((v,i)=>v.render(i));
-PROJECTILES.forEach(v=>v.render());
+    ctx2.clearRect(0,0,canvas2.width,canvas2.height);
+    EXPL_PARTICLE.forEach(v=>v.render());
+    PLAYERS.forEach((v,i)=>v.render(i));
+    PROJECTILES.forEach(v=>v.render());
 }
 
 
