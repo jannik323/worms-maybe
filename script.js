@@ -32,22 +32,28 @@ const PROJECTILES = [];
 
 class block{
 
-    constructor(color="black",x=0,y=0,collision=false){
+    constructor(color="black",x=0,y=0,collision=false,destroyable=true,hasdmg=false){
         this.color = color;
         this.x = x;
         this.y = y;
         this.collision = collision;
+        this.destroyable = destroyable;
+        this.hasdmg = hasdmg;
         this.render();
     }
 
     destroy(){
-        this.collision = false;
-        this.changecolor("white");
+        if(this.destroyable){
+            this.collision = false;
+            this.changecolor("white");
+        }
     }
 
     changecolor(color){
-        this.color = color;
-        this.render();        
+        if(this.destroyable){
+            this.color = color;
+            this.render();        
+        }
     }
 
     render(){
@@ -155,6 +161,7 @@ class player{
                 if(LANDSCAPE[ypos+sizeposy][xpos+this.size].collision){
                     this.x = (xpos*x_scale)-0.0001;
                     this.xa = 0;
+                    if(LANDSCAPE[ypos+sizeposy][xpos+this.size].hasdmg){this.health -= 1}
                 }
             }
             
@@ -162,6 +169,7 @@ class player{
                 if(LANDSCAPE[ypos+sizeposy][xpos].collision){
                     this.x = ((xpos+1)*x_scale)+0.0001
                     this.xa = 0;
+                    if(LANDSCAPE[ypos+sizeposy][xpos].hasdmg){this.health -= 1}
                 }
             }
             
@@ -170,16 +178,15 @@ class player{
                 if(LANDSCAPE[ypos+this.size][xpos+sizeposx].collision){
                     this.y = (ypos*y_scale)-0.0001;
                     this.ya = 0
+                    if(LANDSCAPE[ypos+this.size][xpos+sizeposx].hasdmg){this.health -= 1; this.ya = -y_scale}
 
                     if(curP){
-
                         if(KEYS["d"] || KEYS["a"]){
                             this.ya -= y_scale/this.size/2;
                         }
                         if(KEYS["w"]){
                             this.ya = -y_scale*2;
                         }
-
                     }
                     
                 }
@@ -189,6 +196,7 @@ class player{
                 if(LANDSCAPE[ypos][xpos+sizeposx].collision){
                     this.y = ((ypos+1)*y_scale)+0.0001
                     this.ya = 0;
+                    if(LANDSCAPE[ypos][xpos+sizeposx].hasdmg){this.health -= 1}
                 }
             }
             
@@ -212,21 +220,22 @@ class player{
         }
 
         // border col
-        
-        if(this.y >= canvas2.height-(y_scale*this.size)){
-            this.y = canvas2.height-(y_scale*this.size)-y_scale;
-        }
-
-        if(this.y < 0){
-            this.y = y_scale;
-        }
-        
-        if(this.x+(this.size*x_scale) > canvas2.width){
-            this.x = canvas2.width-(this.size*x_scale)-x_scale;
-        }
-
-        if(this.x < 0){
-            this.x = x_scale;
+        {
+            if(this.y >= canvas2.height-(y_scale*this.size)){
+                this.y = canvas2.height-(y_scale*this.size)-y_scale;
+            }
+    
+            if(this.y < 0){
+                this.y = y_scale;
+            }
+            
+            if(this.x+(this.size*x_scale) > canvas2.width){
+                this.x = canvas2.width-(this.size*x_scale)-x_scale;
+            }
+    
+            if(this.x < 0){
+                this.x = x_scale;
+            }
         }
         
     }
@@ -479,7 +488,10 @@ function createrectanlge(x,y,width,height){
 }
 
 function createcricle(x,y,range){
-    PLAYERS.forEach(v=>{if(distance(v.x,x,v.y,y) < range/2.15){v.health -= 10;}});
+    PLAYERS.forEach(v=>{if(distance(v.x+(v.size/2*x_scale),x,v.y,y+(v.size/2*y_scale)) < range*x_scale/2.15){v.health -= 10;}});
+   TEST.x = x;
+   TEST.y = y;
+   TEST.range = range*x_scale/2.15;
     x = Math.floor(x/x_scale)-Math.round(range/2);
     y = Math.floor(y/y_scale)-Math.round(range/2);
     for(let posy= 0;posy<range; posy++){  
@@ -560,10 +572,14 @@ function generatLandscape(){
     for(let y = 0; y < land_y; y++){
         LANDSCAPE[y] = [];
         for(let x = 0; x < land_x; x++){
-            if(y< generatedland[x]){
-                LANDSCAPE[y].push(new block("white",x,y,false));
+            if(y<land_y-4){
+                if(y< generatedland[x]){
+                    LANDSCAPE[y].push(new block("white",x,y,false));
+                }else{
+                    LANDSCAPE[y].push(new block("hsl("+(35+randomrange(-5,5))+", "+randomrange(50,90)+"%, "+((((y-(generatedland[x]))+20)/land_y)*255/3)+"%)",x,y,true)); 
+                }
             }else{
-                LANDSCAPE[y].push(new block("hsl("+(35+randomrange(-5,5))+", "+randomrange(50,90)+"%, "+((((y-(generatedland[x]))+20)/land_y)*255/3)+"%)",x,y,true));
+                LANDSCAPE[y].push(new block("hsl(0, 70%, 35%)",x,y,true,false,true));
             }
         }
     }   
@@ -581,9 +597,18 @@ function distance(x1,x2,y1,y2){
 let lastRenderTime = 0;
 let GameSpeed = 200;
 let lastGameSpeed = 200;
-
 const LANDSCAPE = [];
-generatLandscape();
+
+const TEST = {x:0,y:0,x2:0,y2:0,width:10,height:10,range:10};
+
+startgame();
+
+
+function startgame(){
+
+    generatLandscape();
+    window.requestAnimationFrame(main); 
+}
 
 function main(currentTime){
     window.requestAnimationFrame(main);
@@ -594,7 +619,6 @@ function main(currentTime){
     render();
 
 }
-window.requestAnimationFrame(main); 
 
 function update(){
     PLAYERS.forEach((v,i)=>v.update(i));
@@ -607,6 +631,10 @@ function render(){
     EXPL_PARTICLE.forEach(v=>v.render());
     PLAYERS.forEach((v,i)=>v.render(i));
     PROJECTILES.forEach(v=>v.render());
+
+    // ctx2.beginPath();
+    // ctx2.arc(TEST.x,TEST.y,TEST.range,0,Math.PI*2)
+    // ctx2.stroke();
 }
 
 
