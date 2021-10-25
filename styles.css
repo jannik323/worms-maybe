@@ -12,7 +12,7 @@ background: rgb(38, 38, 38);
 
 canvas.gamecanvas{
     background-color: aliceblue;
-    width: 800px;
+    width: 1000px;
     height: 600px;
     grid-column-start: 1;
     grid-row-start: 1;

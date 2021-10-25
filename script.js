@@ -1,7 +1,7 @@
 "use strict";
 
 let canvas1 = document.getElementById("canvas1");
-canvas1.width = 800;
+canvas1.width = 1000;
 canvas1.height = 600;
 
 
@@ -101,6 +101,8 @@ class player{
     }
 
     update(i){
+
+        if(this.health < 0){PLAYERS.splice(i,1)}
         
         let xpos = Math.floor(this.x/x_scale);
         let ypos = Math.floor(this.y/y_scale);
@@ -148,7 +150,7 @@ class player{
             if(KEYS["f"]){
                 if(this.shotstep > 20){
                     this.shotstep = 0
-                    new projectile(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir,"grenade",this.shotvel,this);
+                    new projectile(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir,"fuckyou",this.shotvel,this);
                     
                 }
             }
@@ -311,9 +313,31 @@ class player{
 const PROJECTILETYPES = {
 
     grenade:{
+        vel:3.5,
+        grav:0.1,
+        size:1,
+        expsize:10,
+        drag:0.995,
+    },
+    bomb:{
         vel:3,
         grav:0.1,
         size:1,
+        expsize:30,
+        drag:0.995,
+    },
+    atombomb:{
+        vel:2.8,
+        grav:0.1,
+        size:1,
+        expsize:100,
+        drag:0.995,
+    },
+    fuckyou:{
+        vel:4,
+        grav:0.1,
+        size:1,
+        expsize:300,
         drag:0.995,
     }
 
@@ -363,7 +387,7 @@ class projectile {
             this.ya += this.grav;
 
             if(LANDSCAPE[ypos][xpos].collision){
-                createcricle(this.x,this.y,30);
+                createcricle(this.x,this.y,this.expsize);
                 
                 PROJECTILES.splice(i,1);
             }
@@ -392,6 +416,7 @@ class projectile {
         this.grav = PROJECTILETYPES[this.type].grav;
         this.size = PROJECTILETYPES[this.type].size;
         this.drag = PROJECTILETYPES[this.type].drag;
+        this.expsize = PROJECTILETYPES[this.type].expsize;
     }
 
 }
