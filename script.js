@@ -32,8 +32,11 @@ const PROJECTILES = [];
 
 class block{
 
-    constructor(color="black",x=0,y=0,collision=false,destroyable=true,hasdmg=false){
-        this.color = color;
+    constructor(hue,sat,ligh,x=0,y=0,collision=false,destroyable=true,hasdmg=false){
+        this.hue = hue + randomrange(-5,5);
+        this.sat  = sat + randomrange(-5,5);
+        this.ligh = ligh;
+        this.color = "hsl("+this.hue+","+this.sat+"%,"+this.ligh+"%)";
         this.x = x;
         this.y = y;
         this.collision = collision;
@@ -45,18 +48,21 @@ class block{
     destroy(){
         if(this.destroyable){
             this.collision = false;
-            this.changecolor("white");
+            this.changecolor("none","none",100);
         }
     }
 
-    changecolor(color){
+    changecolor(hue="none",sat="none",ligh="none"){
         if(this.destroyable){
-            this.color = color;
+            if(hue!=="none"){this.hue = hue;}
+            if(sat!=="none"){this.sat = sat;}
+            if(ligh!=="none"){this.ligh = ligh;}
             this.render();        
         }
     }
 
     render(){
+        this.color = "hsl("+this.hue+","+this.sat+"%,"+this.ligh+"%)";
         ctx1.fillStyle = this.color;
         ctx1.clearRect(this.x*x_scale,this.y*y_scale,x_scale,y_scale);
         ctx1.fillRect(this.x*x_scale,this.y*y_scale,x_scale,y_scale);
@@ -69,10 +75,13 @@ class block{
 const GameManager = {
 
     currentPlayer : 0,
-    nextPlayer: function(){
-    GameManager.currentPlayer += 1;
+    nextPlayer: function(a=1){
+    GameManager.currentPlayer += a;
     if(GameManager.currentPlayer > PLAYERS.length-1){
         GameManager.currentPlayer = 0;
+    }
+    if(GameManager.currentPlayer < 0){
+        GameManager.currentPlayer = PLAYERS.length-1;
     }
 
     },
@@ -97,12 +106,18 @@ class player{
         this.shotvela = 0;
         this.lastshot = [];
         this.health = 100;
+        this.showhealth = false;
         PLAYERS.push(this);        
     }
 
     update(i){
 
-        if(this.health < 0){PLAYERS.splice(i,1)}
+        if(this.health < 0){
+            PLAYERS.splice(i,1);
+            if(GameManager.currentPlayer > i){
+                GameManager.nextPlayer(-1);
+            }
+        }
         
         let xpos = Math.floor(this.x/x_scale);
         let ypos = Math.floor(this.y/y_scale);
@@ -150,7 +165,7 @@ class player{
             if(KEYS["f"]){
                 if(this.shotstep > 20){
                     this.shotstep = 0
-                    new projectile(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir,"fuckyou",this.shotvel,this);
+                    new projectile(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir,"bomb",this.shotvel,this);
                     
                 }
             }
@@ -163,7 +178,7 @@ class player{
                 if(LANDSCAPE[ypos+sizeposy][xpos+this.size].collision){
                     this.x = (xpos*x_scale)-0.0001;
                     this.xa = 0;
-                    if(LANDSCAPE[ypos+sizeposy][xpos+this.size].hasdmg){this.health -= 1}
+                    if(LANDSCAPE[ypos+sizeposy][xpos+this.size].hasdmg){this.health -= 3}
                 }
             }
             
@@ -171,7 +186,7 @@ class player{
                 if(LANDSCAPE[ypos+sizeposy][xpos].collision){
                     this.x = ((xpos+1)*x_scale)+0.0001
                     this.xa = 0;
-                    if(LANDSCAPE[ypos+sizeposy][xpos].hasdmg){this.health -= 1}
+                    if(LANDSCAPE[ypos+sizeposy][xpos].hasdmg){this.health -= 3}
                 }
             }
             
@@ -180,7 +195,7 @@ class player{
                 if(LANDSCAPE[ypos+this.size][xpos+sizeposx].collision){
                     this.y = (ypos*y_scale)-0.0001;
                     this.ya = 0
-                    if(LANDSCAPE[ypos+this.size][xpos+sizeposx].hasdmg){this.health -= 1; this.ya = -y_scale}
+                    if(LANDSCAPE[ypos+this.size][xpos+sizeposx].hasdmg){this.health -= 3; this.ya = -y_scale}
 
                     if(curP){
                         if(KEYS["d"] || KEYS["a"]){
@@ -198,7 +213,7 @@ class player{
                 if(LANDSCAPE[ypos][xpos+sizeposx].collision){
                     this.y = ((ypos+1)*y_scale)+0.0001
                     this.ya = 0;
-                    if(LANDSCAPE[ypos][xpos+sizeposx].hasdmg){this.health -= 1}
+                    if(LANDSCAPE[ypos][xpos+sizeposx].hasdmg){this.health -= 3}
                 }
             }
             
@@ -242,6 +257,13 @@ class player{
         
     }
 
+    damage(dmg){
+        this.health -= dmg;
+        this.showhealth = true;
+        setTimeout(()=>{this.showhealth = false},1000)
+
+    }
+
     render(i){
         ctx2.strokeStyle = "black";
         ctx2.strokeRect(this.x,this.y,this.size*x_scale,this.size*y_scale);
@@ -260,27 +282,6 @@ class player{
         ctx2.beginPath();
         ctx2.lineWidth = 4;
         ctx2.strokeStyle = "grey";
-        ctx2.moveTo(this.x-(this.size*x_scale/2),this.y-(this.size*x_scale));
-        ctx2.lineTo(this.x-(this.size*x_scale/2)+(this.size*2*x_scale),this.y-(this.size*x_scale));
-        ctx2.stroke();
-        ctx2.strokeStyle = "black";
-        ctx2.lineWidth = 1;
-
-
-        ctx2.beginPath();
-        ctx2.lineWidth = 4;
-        ctx2.strokeStyle = "blue";
-        ctx2.moveTo(this.x-(this.size*x_scale/2),this.y-(this.size*x_scale));
-        ctx2.lineTo(this.x-(this.size*x_scale/2)+((this.shotvel/2)*this.size*2*x_scale),this.y-(this.size*x_scale));
-        ctx2.stroke();
-        ctx2.strokeStyle = "black";
-        ctx2.lineWidth = 1;
-
-        // health
-
-        ctx2.beginPath();
-        ctx2.lineWidth = 4;
-        ctx2.strokeStyle = "red";
         ctx2.moveTo(this.x-(this.size*x_scale/2),this.y-(this.size*x_scale*2));
         ctx2.lineTo(this.x-(this.size*x_scale/2)+(this.size*2*x_scale),this.y-(this.size*x_scale*2));
         ctx2.stroke();
@@ -290,13 +291,39 @@ class player{
 
         ctx2.beginPath();
         ctx2.lineWidth = 4;
-        ctx2.strokeStyle = "green";
+        ctx2.strokeStyle = "blue";
         ctx2.moveTo(this.x-(this.size*x_scale/2),this.y-(this.size*x_scale*2));
-        ctx2.lineTo(this.x-(this.size*x_scale/2)+((this.health/100)*this.size*2*x_scale),this.y-(this.size*x_scale*2));
+        ctx2.lineTo(this.x-(this.size*x_scale/2)+((this.shotvel/2)*this.size*2*x_scale),this.y-(this.size*x_scale*2));
         ctx2.stroke();
         ctx2.strokeStyle = "black";
         ctx2.lineWidth = 1;
         }
+
+        if(GameManager.currentPlayer ===  i || this.showhealth === true){
+
+        // health
+
+        ctx2.beginPath();
+        ctx2.lineWidth = 4;
+        ctx2.strokeStyle = "red";
+        ctx2.moveTo(this.x-(this.size*x_scale/2),this.y-(this.size*x_scale));
+        ctx2.lineTo(this.x-(this.size*x_scale/2)+(this.size*2*x_scale),this.y-(this.size*x_scale));
+        ctx2.stroke();
+        ctx2.strokeStyle = "black";
+        ctx2.lineWidth = 1;
+
+
+        ctx2.beginPath();
+        ctx2.lineWidth = 4;
+        ctx2.strokeStyle = "green";
+        ctx2.moveTo(this.x-(this.size*x_scale/2),this.y-(this.size*x_scale));
+        ctx2.lineTo(this.x-(this.size*x_scale/2)+((this.health/100)*this.size*2*x_scale),this.y-(this.size*x_scale));
+        ctx2.stroke();
+        ctx2.strokeStyle = "black";
+        ctx2.lineWidth = 1;
+        }
+
+
         // if(this.lastshot.length > 0){
         //     ctx2.beginPath();
         //     ctx2.moveTo(this.lastshot[0].x,this.lastshot[0].y);
@@ -318,6 +345,7 @@ const PROJECTILETYPES = {
         size:1,
         expsize:10,
         drag:0.995,
+        damage:10,
     },
     bomb:{
         vel:3,
@@ -325,6 +353,7 @@ const PROJECTILETYPES = {
         size:1,
         expsize:30,
         drag:0.995,
+        damage:20,
     },
     atombomb:{
         vel:2.8,
@@ -332,6 +361,7 @@ const PROJECTILETYPES = {
         size:1,
         expsize:100,
         drag:0.995,
+        damage:50,
     },
     fuckyou:{
         vel:4,
@@ -339,6 +369,7 @@ const PROJECTILETYPES = {
         size:1,
         expsize:300,
         drag:0.995,
+        damage:80,
     }
 
 
@@ -387,6 +418,12 @@ class projectile {
             this.ya += this.grav;
 
             if(LANDSCAPE[ypos][xpos].collision){
+                PLAYERS.forEach(v=>{
+                    let pdistance = distance(v.x+(v.size/2*x_scale),this.x,v.y+(v.size/2*y_scale),this.y);
+                    if(pdistance < this.expsize*x_scale/2.15){
+                        v.damage( ((this.expsize*x_scale/2.15) / pdistance)*this.damage);
+                    }
+                });
                 createcricle(this.x,this.y,this.expsize);
                 
                 PROJECTILES.splice(i,1);
@@ -417,6 +454,7 @@ class projectile {
         this.size = PROJECTILETYPES[this.type].size;
         this.drag = PROJECTILETYPES[this.type].drag;
         this.expsize = PROJECTILETYPES[this.type].expsize;
+        this.damage = PROJECTILETYPES[this.type].damage;
     }
 
 }
@@ -479,7 +517,7 @@ class explosion_particle{
             for(let sizeposx= 0;sizeposx<this.size+1 ; sizeposx++){
             for(let sizeposy= 0;sizeposy<this.size+1 ; sizeposy++){  
                 if((sizeposx === 0 || sizeposy === 0 || sizeposx === this.size || sizeposy === this.size) && LANDSCAPE[ypos+sizeposy][xpos+sizeposx].collision){
-                    LANDSCAPE[ypos+sizeposy][xpos+sizeposx].changecolor("hsl("+(35+randomrange(-5,5))+", "+randomrange(50,90)+"%, 10%")
+                    LANDSCAPE[ypos+sizeposy][xpos+sizeposx].changecolor((35+randomrange(-5,5)),randomrange(50,90), 10);
                 }else{
                     LANDSCAPE[ypos+sizeposy][xpos+sizeposx].destroy();
                 }
@@ -513,7 +551,6 @@ function createrectanlge(x,y,width,height){
 }
 
 function createcricle(x,y,range){
-    PLAYERS.forEach(v=>{if(distance(v.x+(v.size/2*x_scale),x,v.y,y+(v.size/2*y_scale)) < range*x_scale/2.15){v.health -= 10;}});
    TEST.x = x;
    TEST.y = y;
    TEST.range = range*x_scale/2.15;
@@ -526,7 +563,7 @@ function createcricle(x,y,range){
             LANDSCAPE[y+posy][x+posx].destroy();
         }else if(distance(x+posx,x+(range/2),y+posy,y+(range/2)) < range/2){
             if(LANDSCAPE[y+posy][x+posx].collision){
-                LANDSCAPE[y+posy][x+posx].changecolor("hsl("+(35+randomrange(-5,5))+", "+randomrange(50,90)+"%, 10%")
+                LANDSCAPE[y+posy][x+posx].changecolor("none",randomrange(50,90), 10)
             }
         }
         }
@@ -593,18 +630,19 @@ function generatLandscape(){
 
     let generatedland = generateland();
     generatedland = roundland(generatedland);
+    let landColor = randomrange(0,255); 
     
     for(let y = 0; y < land_y; y++){
         LANDSCAPE[y] = [];
         for(let x = 0; x < land_x; x++){
             if(y<land_y-4){
                 if(y< generatedland[x]){
-                    LANDSCAPE[y].push(new block("white",x,y,false));
+                    LANDSCAPE[y].push(new block(0,0,100,x,y,false));
                 }else{
-                    LANDSCAPE[y].push(new block("hsl("+(35+randomrange(-5,5))+", "+randomrange(50,90)+"%, "+((((y-(generatedland[x]))+20)/land_y)*255/3)+"%)",x,y,true)); 
+                    LANDSCAPE[y].push(new block(landColor,60,((((y-(generatedland[x]))+20)/land_y)*255/3),x,y,true)); 
                 }
             }else{
-                LANDSCAPE[y].push(new block("hsl(0, 70%, 35%)",x,y,true,false,true));
+                LANDSCAPE[y].push(new block(0, 70, 35,x,y,true,false,true));
             }
         }
     }   
