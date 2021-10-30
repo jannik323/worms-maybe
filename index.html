@@ -10,17 +10,25 @@
     </head>
     
 <body>
-  <div class="flexcol">
-    
-    <div class="combine">
-      <canvas id="canvas1" class="gamecanvas"></canvas>
-      <canvas id="canvas2" class="gamecanvas"></canvas>
-    
+  <div class="flexrow">
+
+    <div class="flexcol">
+      <div id="weaponselect">
+      </div>
     </div>
-    <div class="flexrow">
-      <button onclick="GameManager.nextPlayer()">Next Player</button>
-      <button onclick="new player(50,0)">New Player</button>
+
+    <div class="flexcol">
+      <div class="combine">
+        <canvas id="canvas1" class="gamecanvas"></canvas>
+        <canvas id="canvas2" class="gamecanvas"></canvas>
+      
+      </div>
+      <div class="flexrow">
+        <button onclick="GameManager.nextPlayer()">Next Player</button>
+        <button onclick="new player(50,0)">New Player</button>
+      </div>
     </div>
+
   </div>
 
 

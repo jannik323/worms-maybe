@@ -7,7 +7,7 @@ canvas1.height = 600;
 
 let canscale = canvas1.width/canvas1.height;
 
-let landsize = 200;
+let landsize = 300;
 let land_x = Math.round(landsize*canscale);
 let land_y = Math.round(landsize);
 
@@ -107,6 +107,7 @@ class player{
         this.lastshot = [];
         this.health = 100;
         this.showhealth = false;
+        this.currentWeapon = "GrenadeLauncher";
         PLAYERS.push(this);        
     }
 
@@ -153,21 +154,9 @@ class player{
             if(KEYS["ArrowDown"]){
                 this.shotvela -= 0.002;
             }
-            
     
             if(KEYS[" "]){
-                if(this.shotstep > 30){
-                this.shotstep = 0
-                new explosion_particle(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir,x_scale/2.1 ,"none",this.size+2,5);
-                }
-            }
-    
-            if(KEYS["f"]){
-                if(this.shotstep > 20){
-                    this.shotstep = 0
-                    new projectile(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir,"bomb",this.shotvel,this);
-                    
-                }
+                this.shoot();
             }
         }
         
@@ -257,6 +246,27 @@ class player{
         
     }
 
+    shoot(){
+
+        let curweap = WEAPONTYPES.types[this.currentWeapon]
+        if(this.shotstep > curweap.firerate){
+            this.shotstep = 0
+
+            switch(curweap.bullet){
+
+                case "projectile":
+                    new projectile(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir,curweap.projectile,this.shotvel,this); 
+                    break;
+                case "drill":
+                    new explosion_particle(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir,x_scale/2.1 ,"none",this.size+2,5);
+                    break;
+
+            }
+            
+        }
+
+    }
+
     damage(dmg){
         this.health -= dmg;
         this.showhealth = true;
@@ -336,6 +346,54 @@ class player{
     }
 }
 
+const WEAPONTYPES = {
+    typearray:[],
+
+    types:{
+        GrenadeLauncher:{
+            name:"GrenadeLauncher",
+            firerate:30,
+            bullet:"projectile",
+            projectile:"grenade",
+        },
+        BombLaucher:{
+            name:"BombLaucher",
+            firerate:20,
+            bullet:"projectile",
+            projectile:"bomb",
+        },
+        Drill:{
+            name:"Drill",
+            firerate:20,
+            bullet:"drill",
+            projectile:"none",
+        },
+    },
+
+    setup:function(){
+        WEAPONTYPES.typearray = [];
+        for(let type in WEAPONTYPES.types){
+            WEAPONTYPES.typearray.push(WEAPONTYPES.types[type].name);
+        }
+
+        WEAPONTYPES.typearray.forEach(t=>{
+            let ws = document.getElementById("weaponselect");
+            let btn = document.createElement("button");
+            btn.value = t;
+            btn.innerHTML = t;
+            btn.addEventListener("click",()=>{
+                PLAYERS[GameManager.currentPlayer].currentWeapon = btn.value;
+            });
+            ws.appendChild(btn);
+
+        })
+
+    }
+
+}
+WEAPONTYPES.setup();
+
+
 
 const PROJECTILETYPES = {
 
@@ -343,7 +401,7 @@ const PROJECTILETYPES = {
         vel:3.5,
         grav:0.1,
         size:1,
-        expsize:10,
+        expsize:20,
         drag:0.995,
         damage:10,
     },
@@ -517,7 +575,7 @@ class explosion_particle{
             for(let sizeposx= 0;sizeposx<this.size+1 ; sizeposx++){
             for(let sizeposy= 0;sizeposy<this.size+1 ; sizeposy++){  
                 if((sizeposx === 0 || sizeposy === 0 || sizeposx === this.size || sizeposy === this.size) && LANDSCAPE[ypos+sizeposy][xpos+sizeposx].collision){
-                    LANDSCAPE[ypos+sizeposy][xpos+sizeposx].changecolor((35+randomrange(-5,5)),randomrange(50,90), 10);
+                    LANDSCAPE[ypos+sizeposy][xpos+sizeposx].changecolor("none",randomrange(50,90), LANDSCAPE[ypos+sizeposy][xpos+sizeposx].ligh / 1.5);
                 }else{
                     LANDSCAPE[ypos+sizeposy][xpos+sizeposx].destroy();
                 }
@@ -559,13 +617,14 @@ function createcricle(x,y,range){
     for(let posy= 0;posy<range; posy++){  
     for(let posx= 0;posx<range; posx++){
         if(x+posx<land_x && y+posy < land_y && x+posx > 0 && y+posy > 0){
-        if(distance(x+posx,x+(range/2),y+posy,y+(range/2)) < range/2.15){
-            LANDSCAPE[y+posy][x+posx].destroy();
-        }else if(distance(x+posx,x+(range/2),y+posy,y+(range/2)) < range/2){
-            if(LANDSCAPE[y+posy][x+posx].collision){
-                LANDSCAPE[y+posy][x+posx].changecolor("none",randomrange(50,90), 10)
+            let blockdist = distance(x+posx,x+(range/2),y+posy,y+(range/2));    
+            if(blockdist < range/2.15){
+                LANDSCAPE[y+posy][x+posx].destroy();
+            }else if(blockdist < range/2){
+                if(LANDSCAPE[y+posy][x+posx].collision  && randomrange(0,2)>0){
+                    LANDSCAPE[y+posy][x+posx].changecolor("none",randomrange(50,90), LANDSCAPE[y+posy][x+posx].ligh / 2)
+                }
             }
-        }
         }
         else{
             console.log(y,x,"outside errror");
