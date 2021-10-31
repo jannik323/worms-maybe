@@ -12,20 +12,22 @@
 <body>
   <div class="flexrow">
 
-    <div class="flexcol">
+    <div class="flexcol margin">
       <div id="weaponselect">
+      </div>
+      <div id="players">
       </div>
     </div>
 
-    <div class="flexcol">
+    <div class="flexcol margin">
       <div class="combine">
         <canvas id="canvas1" class="gamecanvas"></canvas>
         <canvas id="canvas2" class="gamecanvas"></canvas>
       
       </div>
-      <div class="flexrow">
+      <div class="flexrow margin">
         <button onclick="GameManager.nextPlayer()">Next Player</button>
-        <button onclick="new player(50,0)">New Player</button>
+        <button onclick="new player(randomrange(20,800-20),0)">New Player</button>
       </div>
     </div>
 

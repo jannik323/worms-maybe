@@ -7,7 +7,7 @@ canvas1.height = 600;
 
 let canscale = canvas1.width/canvas1.height;
 
-let landsize = 300;
+let landsize = 200;
 let land_x = Math.round(landsize*canscale);
 let land_y = Math.round(landsize);
 
@@ -76,15 +76,38 @@ const GameManager = {
 
     currentPlayer : 0,
     nextPlayer: function(a=1){
-    GameManager.currentPlayer += a;
-    if(GameManager.currentPlayer > PLAYERS.length-1){
-        GameManager.currentPlayer = 0;
-    }
-    if(GameManager.currentPlayer < 0){
-        GameManager.currentPlayer = PLAYERS.length-1;
-    }
+        GameManager.currentPlayer += a;
+        if(GameManager.currentPlayer > PLAYERS.length-1){
+            GameManager.currentPlayer = 0;
+        }
+        if(GameManager.currentPlayer < 0){
+            GameManager.currentPlayer = PLAYERS.length-1;
+        }
 
     },
+    addPlayer:function(player){
+        const playershtml = document.getElementById("players");
+        let div = document.createElement("div");
+        let span = document.createElement("span");
+        let bar = document.createElement("meter");
+        div.classList.add("flexcol");
+        div.id = player.name; 
+        span.innerHTML = player.name;
+        bar.max = 100;
+        bar.min = 0;
+        bar.value = player.health;
+        div.appendChild(span);
+        div.appendChild(bar);
+        playershtml.appendChild(div);
+
+    },
+    removePlayer:function(player){
+
+    },
+    updatePlayer:function(player){
+
+    }
+
 
 
 
@@ -93,7 +116,7 @@ const GameManager = {
 
 class player{
 
-    constructor(x=0,y=0){
+    constructor(x=0,y=0,name="none"){
         this.x = x ; 
         this.y = y ;
         this.size = 6;
@@ -108,7 +131,13 @@ class player{
         this.health = 100;
         this.showhealth = false;
         this.currentWeapon = "GrenadeLauncher";
-        PLAYERS.push(this);        
+        if(name === "none"){
+            this.name = "boy"+ randomrange(0,1000);
+        }else{
+            this.name= name;
+        }
+        PLAYERS.push(this);   
+        GameManager.addPlayer(this)     
     }
 
     update(i){
@@ -367,6 +396,18 @@ const WEAPONTYPES = {
             firerate:20,
             bullet:"drill",
             projectile:"none",
+        },
+        AtomBomb:{
+            name:"AtomBomb",
+            firerate:20,
+            bullet:"projectile",
+            projectile:"atombomb",
+        },
+        Uzi:{
+            name:"Uzi",
+            firerate:2,
+            bullet:"projectile",
+            projectile:"grenade",
         },
     },
 
