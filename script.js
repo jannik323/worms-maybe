@@ -102,10 +102,13 @@ const GameManager = {
 
     },
     removePlayer:function(player){
-
+        const playershtml = document.getElementById("players");
+        const playerdiv =document.getElementById(player.name);
+        playershtml.removeChild(playerdiv);
     },
     updatePlayer:function(player){
-
+        const playerdiv =document.getElementById(player.name);
+        playerdiv.lastChild.value = player.health;
     }
 
 
@@ -144,6 +147,7 @@ class player{
 
         if(this.health < 0){
             PLAYERS.splice(i,1);
+            GameManager.removePlayer(this);
             if(GameManager.currentPlayer > i){
                 GameManager.nextPlayer(-1);
             }
@@ -299,6 +303,7 @@ class player{
     damage(dmg){
         this.health -= dmg;
         this.showhealth = true;
+        GameManager.updatePlayer(this);
         setTimeout(()=>{this.showhealth = false},1000)
 
     }
@@ -403,8 +408,8 @@ const WEAPONTYPES = {
             bullet:"projectile",
             projectile:"atombomb",
         },
-        Uzi:{
-            name:"Uzi",
+        idk:{
+            name:"idk",
             firerate:2,
             bullet:"projectile",
             projectile:"grenade",
@@ -445,6 +450,16 @@ const PROJECTILETYPES = {
         expsize:20,
         drag:0.995,
         damage:10,
+        bounce:4,
+    },
+    smallbomb:{
+        vel:3.5,
+        grav:0.1,
+        size:1,
+        expsize:20,
+        drag:0.995,
+        damage:10,
+        bounce:false,
     },
     bomb:{
         vel:3,
@@ -453,6 +468,7 @@ const PROJECTILETYPES = {
         expsize:30,
         drag:0.995,
         damage:20,
+        bounce:false,
     },
     atombomb:{
         vel:2.8,
@@ -461,6 +477,7 @@ const PROJECTILETYPES = {
         expsize:100,
         drag:0.995,
         damage:50,
+        bounce:false,
     },
     fuckyou:{
         vel:4,
@@ -469,6 +486,7 @@ const PROJECTILETYPES = {
         expsize:300,
         drag:0.995,
         damage:80,
+        bounce:false,
     }
 
 
@@ -489,7 +507,7 @@ class projectile {
         this.settype();
         this.ya = 0;
         this.vel = this.vel*velmult;
-         
+        
 
         PROJECTILES.push(this);
     }
@@ -517,15 +535,13 @@ class projectile {
             this.ya += this.grav;
 
             if(LANDSCAPE[ypos][xpos].collision){
-                PLAYERS.forEach(v=>{
-                    let pdistance = distance(v.x+(v.size/2*x_scale),this.x,v.y+(v.size/2*y_scale),this.y);
-                    if(pdistance < this.expsize*x_scale/2.15){
-                        v.damage( ((this.expsize*x_scale/2.15) / pdistance)*this.damage);
-                    }
-                });
-                createcricle(this.x,this.y,this.expsize);
-                
-                PROJECTILES.splice(i,1);
+                if(this.bounce === false || this.bounce < 1){
+                    this.explode(i);
+                }else{
+                    this.bounce--;
+                    this.ya *= -0.1;
+                    this.y += this.ya;
+                }
             }
 
             
@@ -537,6 +553,20 @@ class projectile {
         }
 
         
+    }
+
+    explode(i){
+
+        PLAYERS.forEach(v=>{
+            let pdistance = distance(v.x+(v.size/2*x_scale),this.x,v.y+(v.size/2*y_scale),this.y);
+            if(pdistance < this.expsize*x_scale/2.15){
+                v.damage( ((this.expsize*x_scale/2.15) / pdistance)*this.damage);
+            }
+        });
+        createcricle(this.x,this.y,this.expsize);
+        
+        PROJECTILES.splice(i,1);
+
     }
 
     render(){
@@ -554,6 +584,7 @@ class projectile {
         this.drag = PROJECTILETYPES[this.type].drag;
         this.expsize = PROJECTILETYPES[this.type].expsize;
         this.damage = PROJECTILETYPES[this.type].damage;
+        this.bounce = PROJECTILETYPES[this.type].bounce;
     }
 
 }
@@ -676,33 +707,35 @@ function createcricle(x,y,range){
 function generateland(){
     let genyland = []
     genyland.push(randomrange(land_y/3,land_y/1.5));
-    for(let x = 1; x<land_x;x++){
+    genyland.push(genyland[0]+randomrange(-2,2));
+    for(let x = 2; x<land_x;x++){
         switch(randomrange(0,10)){
  
             case 0:
-                case 1:
-                case 2:
+            case 1:
+            case 2:
                 genyland.push(genyland[x-1]+randomrange(-2,2));
                 break;
             case 3:
             case 4:
-                case 6:
-                genyland.push(genyland[x-1]+randomrange(-6,6));
+            case 6:
+                genyland.push(genyland[x-1]+randomrange(-5,5));
                 break;
             case 5:
             case 7:
             case 8:
-                case 9:
+            case 9:
                 genyland.push(genyland[x-1]+randomrange(-1,1));
                 break;
             case 10:
-                genyland.push(genyland[x-1]+randomrange(-30,30));
+                genyland.push(genyland[x-1]+randomrange(-20,20));
                 break;
-
-
-
-
         }
+
+        if((genyland[x-1] === genyland[x-2] || genyland[x-1]+1 === genyland[x-2]  || genyland[x-1]-1 === genyland[x-2]) ){
+            genyland[x] = genyland[x-1]+randomrange(-2,2);
+        }
+        
 
 
         if(genyland[x] < 0 ){
