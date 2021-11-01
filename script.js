@@ -450,7 +450,7 @@ const PROJECTILETYPES = {
         expsize:20,
         drag:0.995,
         damage:10,
-        bounce:4,
+        bounce:10,
     },
     smallbomb:{
         vel:3.5,
@@ -505,8 +505,12 @@ class projectile {
 
         this.type = type;
         this.settype();
+        this.starttime = Date.now();
+        this.yga = 0;
+        this.xvel = this.vel*velmult;
+        this.yvel = this.vel*velmult;
         this.ya = 0;
-        this.vel = this.vel*velmult;
+        this.xa = 0;
         
 
         PROJECTILES.push(this);
@@ -530,24 +534,53 @@ class projectile {
             PROJECTILES.splice(i,1);
         }else{
            
-            this.vel *= this.drag; 
             
-            this.ya += this.grav;
-
             if(LANDSCAPE[ypos][xpos].collision){
-                if(this.bounce === false || this.bounce < 1){
+                let dTime= Date.now() - this.starttime;
+                if(this.bounce === false || dTime > (this.bounce*1000)){
                     this.explode(i);
                 }else{
-                    this.bounce--;
-                    this.ya *= -0.1;
-                    this.y += this.ya;
+                    let yy = this.ya+this.yga;
+                    let xx = this.xa;
+
+                    this.y -= yy;
+                    ypos = Math.floor(this.y/y_scale);
+                    xpos = Math.floor(this.x/x_scale);
+                    if(LANDSCAPE[ypos][xpos].collision){
+                        this.xvel *= -0.8;
+                        this.y = ((ypos)*y_scale)+0.0001
+                        this.y -= yy;
+
+
+                    }
+                    this.y += yy;
+
+                    this.x -= xx;
+                    xpos = Math.floor(this.x/x_scale);
+                    ypos = Math.floor(this.y/y_scale);
+                    if(LANDSCAPE[ypos][xpos].collision){
+                        this.yvel *= -0.8;
+                        this.yga *=-0.6;
+                        this.x -= xx;
+
+                    }
+                    this.x += xx;
+                    
+                    
                 }
             }
-
             
+            
+            this.xvel *= this.drag; 
+            this.yvel *= this.drag; 
 
-            this.x += Math.cos(this.dir)*this.vel;
-            this.y += (Math.sin(this.dir)*this.vel)+this.ya;
+            this.yga += this.grav;
+
+            this.xa = Math.cos(this.dir)*this.xvel;
+            this.ya = Math.sin(this.dir)*this.yvel;
+
+            this.x += this.xa;
+            this.y += this.ya+this.yga;
             // this.parent.lastshot.push({x:this.x,y:this.y});
 
         }
@@ -574,7 +607,17 @@ class projectile {
         ctx2.strokeRect(this.x,this.y,this.size*x_scale,this.size*y_scale);
         ctx2.fillStyle = "white";
         ctx2.fillRect(this.x,this.y,this.size*x_scale,this.size*y_scale);
-        ctx2.arc(10,10, this.size, 0,Math.PI*2)
+        ctx2.beginPath();
+        ctx2.arc(10,10, this.size, 0,Math.PI*2);
+        ctx2.stroke();
+
+        if(this.bounce !== false){
+            ctx2.font= "20px monospace" 
+            ctx2.fillStyle = "red";
+            ctx2.fillText(conv_time(Date.now() - this.starttime,3,4),this.x-(this.size*x_scale),this.y-(this.size*x_scale*2));
+            ctx2.fillStyle = "black";
+            
+        }
     }
 
     settype(){
@@ -788,6 +831,10 @@ function randomrange(min, max) {
 
 function distance(x1,x2,y1,y2){
     return Math.sqrt(((x2-x1)**2)+((y2-y1)**2));
+}
+
+function conv_time(ms,a=0,e=0) {
+    return new Date(ms).toISOString().slice(15+a, -1-e);
 }
 
 let lastRenderTime = 0;
