@@ -10,6 +10,7 @@ let canscale = canvas1.width/canvas1.height;
 let landsize = 200;
 let land_x = Math.round(landsize*canscale);
 let land_y = Math.round(landsize);
+let LANDSCAPE = [];
 
 let x_scale = canvas1.width/land_x;
 let y_scale = canvas1.height/land_y;
@@ -747,83 +748,126 @@ function createcricle(x,y,range){
     }}   
 }
 
-function generateland(){
-    let genyland = []
-    genyland.push(randomrange(land_y/3,land_y/1.5));
-    genyland.push(genyland[0]+randomrange(-2,2));
-    for(let x = 2; x<land_x;x++){
-        switch(randomrange(0,10)){
- 
-            case 0:
-            case 1:
-            case 2:
-                genyland.push(genyland[x-1]+randomrange(-2,2));
-                break;
-            case 3:
-            case 4:
-            case 6:
-                genyland.push(genyland[x-1]+randomrange(-5,5));
-                break;
-            case 5:
-            case 7:
-            case 8:
-            case 9:
-                genyland.push(genyland[x-1]+randomrange(-1,1));
-                break;
-            case 10:
-                genyland.push(genyland[x-1]+randomrange(-20,20));
-                break;
-        }
+const LANDGEN = {
+    ygendata: [],
+    blockgendata : [],
+    finished : true,
+    progress:0,
+    progressHTML:document.getElementById("genprogress"),
+    setprogress:function(value){
+        LANDGEN.progress = value;
+        LANDGEN.progressHTML.value = value;
 
-        if((genyland[x-1] === genyland[x-2] || genyland[x-1]+1 === genyland[x-2]  || genyland[x-1]-1 === genyland[x-2]) ){
-            genyland[x] = genyland[x-1]+randomrange(-2,2);
-        }
-        
-
-
-        if(genyland[x] < 0 ){
-        genyland[x] = 0;  
-        }
-        if(genyland[x] > land_y ){
-            genyland[x] = land_y;  
-            }
-    }
-    return genyland;
-}
-
-function roundland(l){
-    l = l.map((v,i)=>{
-        if(i >2 && i < l.length-3){
-            return Math.round((l[i-1]+l[i-2]+l[i-3]+l[i+1]+l[i+2]+l[i+3])/6);
-        }else{
-            return v;
-        }
-        })
-    return l
-}
-
-function generatLandscape(){
-
-    let generatedland = generateland();
-    generatedland = roundland(generatedland);
-    let landColor = randomrange(0,255); 
-    
-    for(let y = 0; y < land_y; y++){
-        LANDSCAPE[y] = [];
-        for(let x = 0; x < land_x; x++){
-            if(y<land_y-4){
-                if(y< generatedland[x]){
-                    LANDSCAPE[y].push(new block(0,0,100,x,y,false));
-                }else{
-                    LANDSCAPE[y].push(new block(landColor,60,((((y-(generatedland[x]))+20)/land_y)*255/3),x,y,true)); 
-                }
+    },
+    roundland: function(l){
+        l = l.map((v,i)=>{
+            if(i >2 && i < l.length-3){
+                return Math.round((l[i-1]+l[i-2]+l[i-3]+l[i+1]+l[i+2]+l[i+3])/6);
             }else{
-                LANDSCAPE[y].push(new block(0, 70, 35,x,y,true,false,true));
+                return v;
+            }
+            })
+        return l;
+    },
+    generateYdata:function(first = false){
+        LANDGEN.ygendata = []
+        LANDGEN.ygendata.push(randomrange(land_y/3,land_y/1.5));
+        LANDGEN.ygendata.push(LANDGEN.ygendata[0]+randomrange(-2,2));
+        for(let x = 2; x<land_x;x++){
+            switch(randomrange(0,10)){
+                case 0:
+                case 1:
+                case 2:
+                    LANDGEN.ygendata.push(LANDGEN.ygendata[x-1]+randomrange(-2,2));
+                    break;
+                case 3:
+                case 4:
+                case 6:
+                    LANDGEN.ygendata.push(LANDGEN.ygendata[x-1]+randomrange(-5,5));
+                    break;
+                case 5:
+                case 7:
+                case 8:
+                case 9:
+                    LANDGEN.ygendata.push(LANDGEN.ygendata[x-1]+randomrange(-1,1));
+                    break;
+                case 10:
+                    LANDGEN.ygendata.push(LANDGEN.ygendata[x-1]+randomrange(-20,20));
+                    break;
+            }
+    
+            if((LANDGEN.ygendata[x-1] === LANDGEN.ygendata[x-2] || LANDGEN.ygendata[x-1]+1 === LANDGEN.ygendata[x-2]  || LANDGEN.ygendata[x-1]-1 === LANDGEN.ygendata[x-2]) ){
+                LANDGEN.ygendata[x] = LANDGEN.ygendata[x-1]+randomrange(-2,2);
+            }
+            if(LANDGEN.ygendata[x] < 0 ){
+            LANDGEN.ygendata[x] = 0;  
+            }
+            if(LANDGEN.ygendata[x] > land_y ){
+                LANDGEN.ygendata[x] = land_y;  
             }
         }
-    }   
+        if(!first){PREVIEW.draw()}
+        return LANDGEN.ygendata;
+    },
+    generateBlockdata:function(ygendata = LANDGEN.ygendata){
+        elementvis("startui");
+        elementvis("progressui","flex");
+        LANDGEN.finished = false;
+        LANDGEN.progressHTML.max = land_y;
+        ygendata = LANDGEN.roundland(ygendata);
+        let landColor = randomrange(0,255); 
+        
+        for(let y = 0; y < land_y; y++){
+            setTimeout((y)=>{
+            LANDGEN.blockgendata[y] = [];
+            for(let x = 0; x < land_x; x++){
+                if(y<land_y-4){
+                    if(y< ygendata[x]){
+                        LANDGEN.blockgendata[y].push(new block(0,0,100,x,y,false));
+                    }else{
+                        LANDGEN.blockgendata[y].push(new block(landColor,60,((((y-(ygendata[x]))+20)/land_y)*255/3),x,y,true)); 
+                    }
+                }else{
+                    LANDGEN.blockgendata[y].push(new block(0, 70, 35,x,y,true,false,true));
+                }
+            }
+            LANDGEN.setprogress(y);
+            if(y===land_y-1){
+                startgame();
+            }
+            },0,y)
+        }   
+        
+    },
 
 }
+LANDGEN.generateYdata(true);
+
+const PREVIEW = {
+
+    canvas:document.getElementById("preview"),
+    ctx:null,
+    setup:function(){
+        PREVIEW.ctx = PREVIEW.canvas.getContext("2d");
+        PREVIEW.canvas.width = PREVIEW.canvas.height = 200;
+        PREVIEW.draw();
+
+    },
+    draw:function(){
+        let factor = PREVIEW.canvas.width/LANDGEN.ygendata.length
+        PREVIEW.ctx.clearRect(0,0,PREVIEW.canvas.width,PREVIEW.canvas.height);
+        PREVIEW.ctx.beginPath();
+        PREVIEW.ctx.moveTo(0,PREVIEW.canvas.height);
+        console.log(LANDGEN.ygendata.length)
+        for(let i=0;i<LANDGEN.ygendata.length;i+=4){
+            PREVIEW.ctx.lineTo(i*factor,LANDGEN.ygendata[i]);
+        }
+        PREVIEW.ctx.lineTo(PREVIEW.canvas.width,PREVIEW.canvas.height);
+        PREVIEW.ctx.fill();
+
+    },
+}
+PREVIEW.setup();
 
 function randomrange(min, max) { 
     return Math.floor(Math.random() * (max - min + 1) + min)
@@ -837,19 +881,23 @@ function conv_time(ms,a=0,e=0) {
     return new Date(ms).toISOString().slice(15+a, -1-e);
 }
 
+function elementvis(element_id,state="none"){
+    let e = document.getElementById(element_id);
+    e.style.display = state;
+}
+
 let lastRenderTime = 0;
 let GameSpeed = 200;
 let lastGameSpeed = 200;
-const LANDSCAPE = [];
 
 const TEST = {x:0,y:0,x2:0,y2:0,width:10,height:10,range:10};
 
-startgame();
-
 
 function startgame(){
-
-    generatLandscape();
+    
+    LANDSCAPE = LANDGEN.blockgendata;
+    elementvis("game","flex");
+    elementvis("progressui");
     window.requestAnimationFrame(main); 
 }
 

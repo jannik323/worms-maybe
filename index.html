@@ -10,7 +10,17 @@
     </head>
     
 <body>
-  <div class="flexrow">
+  <div id="startui" class="flexcol">
+    <button onclick="LANDGEN.generateBlockdata();">Start</button>
+    <button onclick="LANDGEN.generateYdata();">New Map</button>
+    <canvas id="preview"></canvas>
+  </div>
+  
+  <div id="progressui"class="flexcol">
+    <progress id="genprogress" min="0" value="0" max="100"></progress>
+  </div>
+
+  <div id="game" class="flexrow">
 
     <div class="flexcol margin">
       <div id="weaponselect">
