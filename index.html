@@ -11,14 +11,42 @@
     
 <body>
   <div id="startui" class="flexcol">
-    <button onclick="LANDGEN.generateBlockdata();">Start</button>
-    <button onclick="LANDGEN.generateYdata();">New Map</button>
-    <canvas id="preview"></canvas>
+
+    <div id="mapselect" class="flexcol">
+      <div class="box flexcol center">
+        <button onclick="elementvis('mapselect'); elementvis('playerselect','flex');">Player Selection</button>
+      </div>
+      <div class="flexrow box" id="previewdiv">
+        <canvas id="preview"></canvas>
+        <button onclick="LANDGEN.generateYdata();">></button>
+      </div>
+    </div>  
+
+    <div id="playerselect" class="flexcol">
+      <div class="box flexcol center">
+        <button onclick="LANDGEN.generateBlockdata();">Start</button>
+      </div>
+      <div class="flexcol box center">
+        <div class="flexrow box" id="playername">
+          <input type="text" placeholder="Enter Name">
+          <button onclick="PLAYERSETUP.addplayer(this.parentElement.firstElementChild.value)">⭕</button>
+          <button onclick="PLAYERSETUP.removeplayer(this.parentElement.firstElementChild.value)">❌</button>
+        </div>
+        <div class="flexcol box" id="playersel">
+          
+
+        </div>
+
+      </div>
+    </div> 
+
+    <div id="progressui">
+      <progress id="genprogress" min="0" value="0" max="100"></progress>
+    </div>
+
   </div>
   
-  <div id="progressui"class="flexcol">
-    <progress id="genprogress" min="0" value="0" max="100"></progress>
-  </div>
+  
 
   <div id="game" class="flexrow">
 
@@ -37,7 +65,7 @@
       </div>
       <div class="flexrow margin">
         <button onclick="GameManager.nextPlayer()">Next Player</button>
-        <button onclick="new player(randomrange(20,800-20),0)">New Player</button>
+        <button onclick="new player()">New Player</button>
       </div>
     </div>
 

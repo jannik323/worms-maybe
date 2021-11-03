@@ -120,9 +120,8 @@ const GameManager = {
 
 class player{
 
-    constructor(x=0,y=0,name="none"){
-        this.x = x ; 
-        this.y = y ;
+    constructor(name="none",color="black"){
+        this.color = color;
         this.size = 6;
         this.xa = 0;
         this.ya = 0;
@@ -140,6 +139,8 @@ class player{
         }else{
             this.name= name;
         }
+        this.x = randomrange(0,canvas1.width-this.size*x_scale); 
+        this.y = this.size*y_scale ;
         PLAYERS.push(this);   
         GameManager.addPlayer(this)     
     }
@@ -770,6 +771,7 @@ const LANDGEN = {
         return l;
     },
     generateYdata:function(first = false){
+        console.time("ygen");
         LANDGEN.ygendata = []
         LANDGEN.ygendata.push(randomrange(land_y/3,land_y/1.5));
         LANDGEN.ygendata.push(LANDGEN.ygendata[0]+randomrange(-2,2));
@@ -807,37 +809,40 @@ const LANDGEN = {
             }
         }
         if(!first){PREVIEW.draw()}
+        console.timeEnd("ygen");
         return LANDGEN.ygendata;
     },
-    generateBlockdata:function(ygendata = LANDGEN.ygendata){
-        elementvis("startui");
-        elementvis("progressui","flex");
+    generateBlockdata:function (ygendata = LANDGEN.ygendata) {
+        console.time("blockgen");
+        elementvis("playerselect");
+        elementvis("progressui", "flex");
         LANDGEN.finished = false;
         LANDGEN.progressHTML.max = land_y;
         ygendata = LANDGEN.roundland(ygendata);
-        let landColor = randomrange(0,255); 
-        
-        for(let y = 0; y < land_y; y++){
-            setTimeout((y)=>{
-            LANDGEN.blockgendata[y] = [];
-            for(let x = 0; x < land_x; x++){
-                if(y<land_y-4){
-                    if(y< ygendata[x]){
-                        LANDGEN.blockgendata[y].push(new block(0,0,100,x,y,false));
-                    }else{
-                        LANDGEN.blockgendata[y].push(new block(landColor,60,((((y-(ygendata[x]))+20)/land_y)*255/3),x,y,true)); 
+        let landColor = randomrange(0, 255);
+
+        for (let y = 0; y < land_y; y++) {
+            setTimeout((y) => {
+                LANDGEN.blockgendata[y] = [];
+                for (let x = 0; x < land_x; x++) {
+                    if (y < land_y - 4) {
+                        if (y < ygendata[x]) {
+                            LANDGEN.blockgendata[y].push(new block(0, 0, 100, x, y, false));
+                        } else {
+                            LANDGEN.blockgendata[y].push(new block(landColor, 60, ((((y - (ygendata[x])) + 20) / land_y) * 255 / 3), x, y, true));
+                        }
+                    } else {
+                        LANDGEN.blockgendata[y].push(new block(0, 70, 35, x, y, true, false, true));
                     }
-                }else{
-                    LANDGEN.blockgendata[y].push(new block(0, 70, 35,x,y,true,false,true));
                 }
-            }
-            LANDGEN.setprogress(y);
-            if(y===land_y-1){
-                startgame();
-            }
-            },0,y)
-        }   
-        
+                LANDGEN.setprogress(y);
+                if (y === land_y - 1) {
+                    console.timeEnd("blockgen");
+                    startgame();
+                }
+            }, 0, y);
+        }
+
     },
 
 }
@@ -847,18 +852,17 @@ const PREVIEW = {
 
     canvas:document.getElementById("preview"),
     ctx:null,
-    setup:function(){
+    setup:() => {
         PREVIEW.ctx = PREVIEW.canvas.getContext("2d");
         PREVIEW.canvas.width = PREVIEW.canvas.height = 200;
         PREVIEW.draw();
 
     },
-    draw:function(){
+    draw:()=>{
         let factor = PREVIEW.canvas.width/LANDGEN.ygendata.length
         PREVIEW.ctx.clearRect(0,0,PREVIEW.canvas.width,PREVIEW.canvas.height);
         PREVIEW.ctx.beginPath();
         PREVIEW.ctx.moveTo(0,PREVIEW.canvas.height);
-        console.log(LANDGEN.ygendata.length)
         for(let i=0;i<LANDGEN.ygendata.length;i+=4){
             PREVIEW.ctx.lineTo(i*factor,LANDGEN.ygendata[i]);
         }
@@ -868,6 +872,36 @@ const PREVIEW = {
     },
 }
 PREVIEW.setup();
+
+const PLAYERSETUP = {
+    players: new Map(),
+    playerlistHTML:document.getElementById("playersel"),
+    COLORS:["red","blue","purple","green","yellow","orange","black"],
+    addplayer:(name) => {
+        let color = PLAYERSETUP.COLORS[randomrange(0,PLAYERSETUP.COLORS.length)];
+        if(PLAYERSETUP.players.set(name,{name:name,color:color})){PLAYERSETUP.updatelist()}
+    },
+    removeplayer:(name)=>{
+        if(PLAYERSETUP.players.delete(name)){PLAYERSETUP.updatelist()}
+    },
+    updatelist:()=>{
+        PLAYERSETUP.playerlistHTML.innerHTML = "";
+        PLAYERSETUP.players.forEach(v=>{
+            let playerHTML = document.createElement("div");
+            playerHTML.innerHTML = v.name;
+            playerHTML.style.color = v.color;
+            playerHTML.style.textShadow = "1px 1px 2px #333"
+            playerHTML.classList.add("box");
+            PLAYERSETUP.playerlistHTML.appendChild(playerHTML);
+        })
+    },
+    spawnplayers:()=>{
+        PLAYERSETUP.players.forEach(v=>{
+            new player(v.name,v.color);
+        })
+    },
+
+}
 
 function randomrange(min, max) { 
     return Math.floor(Math.random() * (max - min + 1) + min)
@@ -897,7 +931,8 @@ function startgame(){
     
     LANDSCAPE = LANDGEN.blockgendata;
     elementvis("game","flex");
-    elementvis("progressui");
+    elementvis("startui");
+    PLAYERSETUP.spawnplayers();
     window.requestAnimationFrame(main); 
 }
 
