@@ -414,7 +414,7 @@ const WEAPONTYPES = {
             name:"idk",
             firerate:2,
             bullet:"projectile",
-            projectile:"grenade",
+            projectile:"biggrenade",
         },
     },
 
@@ -454,8 +454,17 @@ const PROJECTILETYPES = {
         damage:10,
         bounce:10,
     },
+    biggrenade:{
+        vel:3.2,
+        grav:0.2,
+        size:1,
+        expsize:32,
+        drag:0.994,
+        damage:20,
+        bounce:15,
+    },
     smallbomb:{
-        vel:3.5,
+        vel:3.8,
         grav:0.1,
         size:1,
         expsize:20,
@@ -464,7 +473,7 @@ const PROJECTILETYPES = {
         bounce:false,
     },
     bomb:{
-        vel:3,
+        vel:3.1,
         grav:0.1,
         size:1,
         expsize:30,
@@ -473,21 +482,12 @@ const PROJECTILETYPES = {
         bounce:false,
     },
     atombomb:{
-        vel:2.8,
-        grav:0.1,
-        size:1,
-        expsize:100,
-        drag:0.995,
-        damage:50,
-        bounce:false,
-    },
-    fuckyou:{
         vel:4,
-        grav:0.1,
+        grav:0.3,
         size:1,
-        expsize:300,
-        drag:0.995,
-        damage:80,
+        expsize:50,
+        drag:0.99,
+        damage:50,
         bounce:false,
     }
 
@@ -542,16 +542,20 @@ class projectile {
                 if(this.bounce === false || dTime > (this.bounce*1000)){
                     this.explode(i);
                 }else{
+
+                        // bounce collision
+
                     let yy = this.ya+this.yga;
                     let xx = this.xa;
+                    const xy_flag ={x:false,y:false};
 
                     this.y -= yy;
                     ypos = Math.floor(this.y/y_scale);
                     xpos = Math.floor(this.x/x_scale);
                     if(LANDSCAPE[ypos][xpos].collision){
                         this.xvel *= -0.8;
-                        this.y = ((ypos)*y_scale)+0.0001
-                        this.y -= yy;
+                        xy_flag.y = true;
+                        // 
 
 
                     }
@@ -563,11 +567,16 @@ class projectile {
                     if(LANDSCAPE[ypos][xpos].collision){
                         this.yvel *= -0.8;
                         this.yga *=-0.6;
-                        this.x -= xx;
+                        xy_flag.x = true;
 
                     }
                     this.x += xx;
                     
+                    if(xy_flag.y || xy_flag.x){
+                        this.x -= xx;
+                        this.y -= yy;
+                        if(xy_flag.y){this.y = ((ypos)*y_scale)+0.0001}
+                    }
                     
                 }
             }
@@ -616,7 +625,7 @@ class projectile {
         if(this.bounce !== false){
             ctx2.font= "20px monospace" 
             ctx2.fillStyle = "red";
-            ctx2.fillText(conv_time(Date.now() - this.starttime,3,4),this.x-(this.size*x_scale),this.y-(this.size*x_scale*2));
+            ctx2.fillText(this.bounce-conv_time(Date.now() - this.starttime,2,4),this.x-(this.size*x_scale),this.y-(this.size*x_scale*2));
             ctx2.fillStyle = "black";
             
         }

@@ -13,30 +13,39 @@
   <div id="startui" class="flexcol">
 
     <div id="mapselect" class="flexcol">
-      <div class="box flexcol center">
-        <button onclick="elementvis('mapselect'); elementvis('playerselect','flex');">Player Selection</button>
+      <div class="center flexcol">
+        <h1>Select Map</h1>
       </div>
       <div class="flexrow box" id="previewdiv">
         <canvas id="preview"></canvas>
         <button onclick="LANDGEN.generateYdata();">></button>
       </div>
+      <div class="box flexcol center">
+        <button onclick="elementvis('mapselect'); elementvis('playerselect','flex');">Continue</button>
+      </div>
     </div>  
 
     <div id="playerselect" class="flexcol">
-      <div class="box flexcol center">
-        <button onclick="LANDGEN.generateBlockdata();">Start</button>
+      <div class="center flexcol">
+        <h1>Select Players</h1>
       </div>
+
       <div class="flexcol box center">
         <div class="flexrow box" id="playername">
           <input type="text" placeholder="Enter Name">
-          <button onclick="PLAYERSETUP.addplayer(this.parentElement.firstElementChild.value)">⭕</button>
-          <button onclick="PLAYERSETUP.removeplayer(this.parentElement.firstElementChild.value)">❌</button>
+          <div class="flexrow">
+            <button onclick="PLAYERSETUP.addplayer(this.parentElement.parentElement.firstElementChild.value)">⭕</button>
+            <button onclick="PLAYERSETUP.removeplayer(this.parentElement.parentElement.firstElementChild.value)">❌</button>
+          </div>
         </div>
         <div class="flexcol box" id="playersel">
           
-
+          
         </div>
-
+        
+      </div>
+      <div class="box flexcol center">
+        <button onclick="LANDGEN.generateBlockdata();">Start</button>
       </div>
     </div> 
 
