@@ -110,6 +110,36 @@ const GameManager = {
     updatePlayer:function(player){
         const playerdiv =document.getElementById(player.name);
         playerdiv.lastChild.value = player.health;
+    },
+    roundtimer:{
+        timerHTML:document.getElementById("timer"),
+        starttime:0,
+        totaltime:0,
+        time:0,
+        active:false,
+        finished:false,
+        starttimer:(tt = 1000)=>{
+            if (GameManager.roundtimer.active) { GameManager.roundtimer.resettime(); }
+            GameManager.roundtimer.active = true;
+            GameManager.roundtimer.totaltime = tt;
+            GameManager.roundtimer.starttime = Date.now();
+
+        },
+        resettime:()=>{
+            GameManager.roundtimer.active = false;
+            GameManager.roundtimer.time = 0;
+            GameManager.roundtimer.finished = false;
+        },
+        updatetime:()=>{
+            if(GameManager.roundtimer.active)
+            GameManager.roundtimer.time = ( GameManager.roundtimer.totaltime - (Date.now() - GameManager.roundtimer.starttime ))
+            if( GameManager.roundtimer.time < 0){
+                GameManager.roundtimer.resettime();
+                GameManager.roundtimer.finished = true;
+            }
+            GameManager.roundtimer.timerHTML.innerHTML = GameManager.roundtimer.time;
+        }
+
     }
 
 
@@ -410,9 +440,15 @@ const WEAPONTYPES = {
             bullet:"projectile",
             projectile:"atombomb",
         },
+        Cluster:{
+            name:"Cluster",
+            firerate:30,
+            bullet:"projectile",
+            projectile:"clusterbomb",
+        },
         idk:{
             name:"idk",
-            firerate:2,
+            firerate:1,
             bullet:"projectile",
             projectile:"biggrenade",
         },
@@ -445,6 +481,16 @@ WEAPONTYPES.setup();
 
 const PROJECTILETYPES = {
 
+    smallgrenade:{
+        vel:4,
+        grav:0.1,
+        size:1,
+        expsize:18,
+        drag:0.996,
+        damage:5,
+        bounce:5,
+        cluster:false,
+    },
     grenade:{
         vel:3.5,
         grav:0.1,
@@ -453,6 +499,7 @@ const PROJECTILETYPES = {
         drag:0.995,
         damage:10,
         bounce:10,
+        cluster:false,
     },
     biggrenade:{
         vel:3.2,
@@ -462,6 +509,7 @@ const PROJECTILETYPES = {
         drag:0.994,
         damage:20,
         bounce:15,
+        cluster:false,
     },
     smallbomb:{
         vel:3.8,
@@ -471,6 +519,7 @@ const PROJECTILETYPES = {
         drag:0.995,
         damage:10,
         bounce:false,
+        cluster:false,
     },
     bomb:{
         vel:3.1,
@@ -480,6 +529,17 @@ const PROJECTILETYPES = {
         drag:0.995,
         damage:20,
         bounce:false,
+        cluster:false,
+    },
+    clusterbomb:{
+        vel:3.1,
+        grav:0.1,
+        size:1,
+        expsize:20,
+        drag:0.995,
+        damage:10,
+        bounce:false,
+        cluster:10,
     },
     atombomb:{
         vel:4,
@@ -489,6 +549,7 @@ const PROJECTILETYPES = {
         drag:0.99,
         damage:50,
         bounce:false,
+        cluster:false,
     }
 
 
@@ -610,6 +671,11 @@ class projectile {
         createcricle(this.x,this.y,this.expsize);
         
         PROJECTILES.splice(i,1);
+        if(this.cluster !== false){
+            for(let i = 0;i<this.cluster ;i++){
+                new projectile(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir+(Math.PI/(Math.random()+0.5)),"smallgrenade",Math.random(),this);
+            }
+        }
 
     }
 
@@ -639,6 +705,7 @@ class projectile {
         this.expsize = PROJECTILETYPES[this.type].expsize;
         this.damage = PROJECTILETYPES[this.type].damage;
         this.bounce = PROJECTILETYPES[this.type].bounce;
+        this.cluster = PROJECTILETYPES[this.type].cluster;
     }
 
 }
@@ -794,9 +861,9 @@ const LANDGEN = {
                 case 3:
                 case 4:
                 case 6:
-                    LANDGEN.ygendata.push(LANDGEN.ygendata[x-1]+randomrange(-5,5));
+                    case 5:
+                    LANDGEN.ygendata.push(LANDGEN.ygendata[x-1]+randomrange(-10,10));
                     break;
-                case 5:
                 case 7:
                 case 8:
                 case 9:
@@ -810,8 +877,8 @@ const LANDGEN = {
             if((LANDGEN.ygendata[x-1] === LANDGEN.ygendata[x-2] || LANDGEN.ygendata[x-1]+1 === LANDGEN.ygendata[x-2]  || LANDGEN.ygendata[x-1]-1 === LANDGEN.ygendata[x-2]) ){
                 LANDGEN.ygendata[x] = LANDGEN.ygendata[x-1]+randomrange(-2,2);
             }
-            if(LANDGEN.ygendata[x] < 0 ){
-            LANDGEN.ygendata[x] = 0;  
+            if(LANDGEN.ygendata[x] < 20 ){
+            LANDGEN.ygendata[x] = 20;  
             }
             if(LANDGEN.ygendata[x] > land_y ){
                 LANDGEN.ygendata[x] = land_y;  
@@ -822,34 +889,38 @@ const LANDGEN = {
         return LANDGEN.ygendata;
     },
     generateBlockdata:function (ygendata = LANDGEN.ygendata) {
-        console.time("blockgen");
-        elementvis("playerselect");
-        elementvis("progressui", "flex");
-        LANDGEN.finished = false;
-        LANDGEN.progressHTML.max = land_y;
-        ygendata = LANDGEN.roundland(ygendata);
-        let landColor = randomrange(0, 255);
+        if(PLAYERSETUP.players.size >0){
+            console.time("blockgen");
+            elementvis("playerselect");
+            elementvis("progressui", "flex");
+            LANDGEN.finished = false;
+            LANDGEN.progressHTML.max = land_y;
+            ygendata = LANDGEN.roundland(ygendata);
+            let landColor = randomrange(0, 255);
 
-        for (let y = 0; y < land_y; y++) {
-            setTimeout((y) => {
-                LANDGEN.blockgendata[y] = [];
-                for (let x = 0; x < land_x; x++) {
-                    if (y < land_y - 4) {
-                        if (y < ygendata[x]) {
-                            LANDGEN.blockgendata[y].push(new block(0, 0, 100, x, y, false));
+            for (let y = 0; y < land_y; y++) {
+                setTimeout((y) => {
+                    LANDGEN.blockgendata[y] = [];
+                    for (let x = 0; x < land_x; x++) {
+                        if (y < land_y - 4) {
+                            if (y < ygendata[x]) {
+                                LANDGEN.blockgendata[y].push(new block(0, 0, 100, x, y, false));
+                            } else {
+                                LANDGEN.blockgendata[y].push(new block(landColor, 60, ((((y - (ygendata[x])) + 20) / land_y) * 255 / 3), x, y, true));
+                            }
                         } else {
-                            LANDGEN.blockgendata[y].push(new block(landColor, 60, ((((y - (ygendata[x])) + 20) / land_y) * 255 / 3), x, y, true));
+                            LANDGEN.blockgendata[y].push(new block(0, 70, 35, x, y, true, false, true));
                         }
-                    } else {
-                        LANDGEN.blockgendata[y].push(new block(0, 70, 35, x, y, true, false, true));
                     }
-                }
-                LANDGEN.setprogress(y);
-                if (y === land_y - 1) {
-                    console.timeEnd("blockgen");
-                    startgame();
-                }
-            }, 0, y);
+                    LANDGEN.setprogress(y);
+                    if (y === land_y - 1) {
+                        console.timeEnd("blockgen");
+                        startgame();
+                    }
+                }, 0, y);
+            }
+        }else{
+            alert("You need at least one player to play!")
         }
 
     },
@@ -938,11 +1009,11 @@ const TEST = {x:0,y:0,x2:0,y2:0,width:10,height:10,range:10};
 
 function startgame(){
     
-    LANDSCAPE = LANDGEN.blockgendata;
-    elementvis("game","flex");
-    elementvis("startui");
-    PLAYERSETUP.spawnplayers();
-    window.requestAnimationFrame(main); 
+        LANDSCAPE = LANDGEN.blockgendata;
+        elementvis("game","flex");
+        elementvis("startui");
+        PLAYERSETUP.spawnplayers();
+        window.requestAnimationFrame(main); 
 }
 
 function main(currentTime){
@@ -966,6 +1037,7 @@ function render(){
     EXPL_PARTICLE.forEach(v=>v.render());
     PLAYERS.forEach((v,i)=>v.render(i));
     PROJECTILES.forEach(v=>v.render());
+    GameManager.roundtimer.updatetime();
 
     // ctx2.beginPath();
     // ctx2.arc(TEST.x,TEST.y,TEST.range,0,Math.PI*2)

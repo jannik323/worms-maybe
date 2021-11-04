@@ -57,27 +57,29 @@
   
   
 
-  <div id="game" class="flexrow">
+  <div id="game" class="flexcol">
+    <div class="flexrow">
 
-    <div class="flexcol margin">
-      <div id="weaponselect">
+      <div class="flexcol margin" id="sidebar">
+        <div id="weaponselect">
+        </div>
+        <div id="timer" class="flexcol center">
+            
+        </div>
+        <div id="players">
+        </div>
       </div>
-      <div id="players">
-      </div>
-    </div>
 
-    <div class="flexcol margin">
-      <div class="combine">
+      <div class="combine margin">
         <canvas id="canvas1" class="gamecanvas"></canvas>
         <canvas id="canvas2" class="gamecanvas"></canvas>
+      </div>
       
-      </div>
-      <div class="flexrow margin">
-        <button onclick="GameManager.nextPlayer()">Next Player</button>
-        <button onclick="new player()">New Player</button>
-      </div>
+    </div>  
+    <div class="flexrow">
+      <!-- <button onclick="GameManager.nextPlayer()">Next Player</button>
+        <button onclick="new player()">New Player</button> -->
     </div>
-
   </div>
 
 
