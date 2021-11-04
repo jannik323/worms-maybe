@@ -84,6 +84,7 @@ const GameManager = {
         if(GameManager.currentPlayer < 0){
             GameManager.currentPlayer = PLAYERS.length-1;
         }
+        GameManager.roundtimer.starttimer(20000);
 
     },
     addPlayer:function(player){
@@ -136,8 +137,9 @@ const GameManager = {
             if( GameManager.roundtimer.time < 0){
                 GameManager.roundtimer.resettime();
                 GameManager.roundtimer.finished = true;
+                GameManager.nextPlayer();
             }
-            GameManager.roundtimer.timerHTML.innerHTML = GameManager.roundtimer.time;
+            GameManager.roundtimer.timerHTML.innerHTML = conv_time(GameManager.roundtimer.time);
         }
 
     }
@@ -150,7 +152,7 @@ const GameManager = {
 
 class player{
 
-    constructor(name="none",color="black"){
+    constructor(name="boi"+randomrange(0,1000),color="black"){
         this.color = color;
         this.size = 6;
         this.xa = 0;
@@ -158,17 +160,15 @@ class player{
         this.dir = 0;
         this.dira = 0;
         this.shotstep = 0;
+        this.shotstaken = 0;
         this.shotvel = 1;
         this.shotvela = 0;
         this.lastshot = [];
         this.health = 100;
         this.showhealth = false;
         this.currentWeapon = "GrenadeLauncher";
-        if(name === "none"){
-            this.name = "boy"+ randomrange(0,1000);
-        }else{
-            this.name= name;
-        }
+        this.name= name;
+        this.hasacted = false;
         this.x = randomrange(0,canvas1.width-this.size*x_scale); 
         this.y = this.size*y_scale ;
         PLAYERS.push(this);   
@@ -203,26 +203,31 @@ class player{
             if(KEYS["a"]){
                 this.xa -= x_scale/15;
             }
-    
+            
             if(KEYS["ArrowRight"]){
                 this.dira += 0.01;
             }
-    
+            
             if(KEYS["ArrowLeft"]){
-                this.dira -= 0.01;
-            }
-    
+                    this.dira -= 0.01;
+                }
+                
             if(KEYS["ArrowUp"]){
                 this.shotvela += 0.002;
             }
-    
+            
             if(KEYS["ArrowDown"]){
                 this.shotvela -= 0.002;
             }
-    
-            if(KEYS[" "]){
-                this.shoot();
+                
+            if(!this.hasacted){
+                if(KEYS[" "] || this.shotstaken >0){
+                    this.shoot();
+                }
             }
+
+        }else{
+            if(this.hasacted){this.hasacted = false}
         }
         
          // land col
@@ -315,7 +320,8 @@ class player{
 
         let curweap = WEAPONTYPES.types[this.currentWeapon]
         if(this.shotstep > curweap.firerate){
-            this.shotstep = 0
+            this.shotstep = 0;
+            this.shotstaken ++;
 
             switch(curweap.bullet){
 
@@ -328,7 +334,13 @@ class player{
 
             }
             
+            if(this.shotstaken >= curweap.uses){
+                this.shotstaken = 0;
+                this.hasacted = true;
+                GameManager.roundtimer.starttimer(5000);
+            }
         }
+
 
     }
 
@@ -419,36 +431,42 @@ const WEAPONTYPES = {
         GrenadeLauncher:{
             name:"GrenadeLauncher",
             firerate:30,
+            uses:1,
             bullet:"projectile",
             projectile:"grenade",
         },
         BombLaucher:{
             name:"BombLaucher",
             firerate:20,
+            uses:1,
             bullet:"projectile",
             projectile:"bomb",
         },
         Drill:{
             name:"Drill",
             firerate:20,
+            uses:20,
             bullet:"drill",
             projectile:"none",
         },
         AtomBomb:{
             name:"AtomBomb",
             firerate:20,
+            uses:1,
             bullet:"projectile",
             projectile:"atombomb",
         },
         Cluster:{
             name:"Cluster",
             firerate:30,
+            uses:1,
             bullet:"projectile",
             projectile:"clusterbomb",
         },
         idk:{
             name:"idk",
             firerate:1,
+            uses:10,
             bullet:"projectile",
             projectile:"biggrenade",
         },
@@ -489,7 +507,6 @@ const PROJECTILETYPES = {
         drag:0.996,
         damage:5,
         bounce:5,
-        cluster:false,
     },
     grenade:{
         vel:3.5,
@@ -499,7 +516,6 @@ const PROJECTILETYPES = {
         drag:0.995,
         damage:10,
         bounce:10,
-        cluster:false,
     },
     biggrenade:{
         vel:3.2,
@@ -509,7 +525,6 @@ const PROJECTILETYPES = {
         drag:0.994,
         damage:20,
         bounce:15,
-        cluster:false,
     },
     smallbomb:{
         vel:3.8,
@@ -518,8 +533,6 @@ const PROJECTILETYPES = {
         expsize:20,
         drag:0.995,
         damage:10,
-        bounce:false,
-        cluster:false,
     },
     bomb:{
         vel:3.1,
@@ -528,8 +541,7 @@ const PROJECTILETYPES = {
         expsize:30,
         drag:0.995,
         damage:20,
-        bounce:false,
-        cluster:false,
+        poop:true,
     },
     clusterbomb:{
         vel:3.1,
@@ -538,7 +550,6 @@ const PROJECTILETYPES = {
         expsize:20,
         drag:0.995,
         damage:10,
-        bounce:false,
         cluster:10,
     },
     atombomb:{
@@ -548,8 +559,6 @@ const PROJECTILETYPES = {
         expsize:50,
         drag:0.99,
         damage:50,
-        bounce:false,
-        cluster:false,
     }
 
 
@@ -673,7 +682,7 @@ class projectile {
         PROJECTILES.splice(i,1);
         if(this.cluster !== false){
             for(let i = 0;i<this.cluster ;i++){
-                new projectile(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir+(Math.PI/(Math.random()+0.5)),"smallgrenade",Math.random(),this);
+                new projectile(this.x+(this.size/2*x_scale),this.y+(this.size/2*y_scale),this.dir+(Math.PI/(Math.random()+0.5)),"smallgrenade",Math.random()+1,this);
             }
         }
 
@@ -704,8 +713,9 @@ class projectile {
         this.drag = PROJECTILETYPES[this.type].drag;
         this.expsize = PROJECTILETYPES[this.type].expsize;
         this.damage = PROJECTILETYPES[this.type].damage;
-        this.bounce = PROJECTILETYPES[this.type].bounce;
-        this.cluster = PROJECTILETYPES[this.type].cluster;
+        this.bounce = PROJECTILETYPES[this.type].bounce|| false;
+        this.cluster = PROJECTILETYPES[this.type].cluster|| false;
+        this.poop = PROJECTILETYPES[this.type].poop || false;
     }
 
 }
@@ -889,7 +899,7 @@ const LANDGEN = {
         return LANDGEN.ygendata;
     },
     generateBlockdata:function (ygendata = LANDGEN.ygendata) {
-        if(PLAYERSETUP.players.size >0){
+        if(PLAYERSETUP.players.size >1){
             console.time("blockgen");
             elementvis("playerselect");
             elementvis("progressui", "flex");
@@ -920,7 +930,7 @@ const LANDGEN = {
                 }, 0, y);
             }
         }else{
-            alert("You need at least one player to play!")
+            alert("You need at least two players to play!")
         }
 
     },
@@ -978,7 +988,8 @@ const PLAYERSETUP = {
     spawnplayers:()=>{
         PLAYERSETUP.players.forEach(v=>{
             new player(v.name,v.color);
-        })
+        });
+        GameManager.roundtimer.starttimer(20000);
     },
 
 }
