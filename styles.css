@@ -34,7 +34,32 @@ canvas.gamecanvas{
 }
 
 canvas#canvas2{
-    background-color: hsla(0, 0%, 100%, 0);
+    background-color: transparent;
+    z-index: 2;
+}
+
+canvas#canvas1{
+    background-color: transparent;
+    z-index: 2;
+}
+
+#sun{
+    margin: auto;
+    transform: scale(4);
+    width: 200px;
+    height: 200px;
+    z-index: 1;
+    grid-column-start: 1;
+    grid-row-start: 1;
+}
+
+div#game_background{
+    background-image: linear-gradient(rgb(57, 125, 189),white);
+    width: 1000px;
+    height: 600px;
+    z-index: 0;
+    grid-column-start: 1;
+    grid-row-start: 1;
 }
 
 div.flexcol{

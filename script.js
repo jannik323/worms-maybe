@@ -63,12 +63,16 @@ class block{
     }
 
     render(){
-        this.color = "hsl("+this.hue+","+this.sat+"%,"+this.ligh+"%)";
-        ctx1.fillStyle = this.color;
-        ctx1.clearRect(this.x*x_scale,this.y*y_scale,x_scale,y_scale);
-        ctx1.fillRect(this.x*x_scale,this.y*y_scale,x_scale,y_scale);
-        ctx1.strokeStyle = this.color;
-        ctx1.strokeRect(this.x*x_scale,this.y*y_scale,x_scale,y_scale);
+        if(this.ligh === 100){
+            ctx1.clearRect(this.x*x_scale,this.y*y_scale,x_scale,y_scale);
+        }else{
+            this.color = "hsl("+this.hue+","+this.sat+"%,"+this.ligh+"%)";
+            ctx1.fillStyle = this.color;
+            ctx1.clearRect(this.x*x_scale,this.y*y_scale,x_scale,y_scale);
+            ctx1.fillRect(this.x*x_scale,this.y*y_scale,x_scale,y_scale);
+            ctx1.strokeStyle = this.color;
+            ctx1.strokeRect(this.x*x_scale,this.y*y_scale,x_scale,y_scale);
+        }
     }
 
 }
